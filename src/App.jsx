@@ -48,46 +48,67 @@ const App = () => {
   }, [attendance]);
 
   // Mark attended
-  const handleAttended = (courseCode) => {
-    setAnimatingCard(courseCode);
-    setActionType('attended');
+// Mark attended
+const handleAttended = (courseCode) => {
+  // Ask how many sessions
+  const countStr = window.prompt('How many sessions attended? (1 / 2 / 4)', '1');
+  if (!countStr) return;
 
-    setAttendance(prev => {
-      const prevData = prev[courseCode] || { attended: 0, total: 0 };
-      const attended = (Number(prevData.attended) || 0) + 1;
-      const total = (Number(prevData.total) || 0) + 1;
-      return {
-        ...prev,
-        [courseCode]: { attended, total },
-      };
-    });
+  const count = Number(countStr);
+  if (![1, 2, 4].includes(count)) {
+    alert('Please enter 1, 2, or 4');
+    return;
+  }
 
-    setTimeout(() => {
-      setAnimatingCard(null);
-      setActionType(null);
-    }, 400);
-  };
+  setAnimatingCard(courseCode);
+  setActionType('attended');
 
-  // Mark missed
-  const handleMissed = (courseCode) => {
-    setAnimatingCard(courseCode);
-    setActionType('missed');
+  setAttendance(prev => {
+    const prevData = prev[courseCode] || { attended: 0, total: 0 };
+    const attended = (Number(prevData.attended) || 0) + count;
+    const total = (Number(prevData.total) || 0) + count;
+    return {
+      ...prev,
+      [courseCode]: { attended, total },
+    };
+  });
 
-    setAttendance(prev => {
-      const prevData = prev[courseCode] || { attended: 0, total: 0 };
-      const attended = Number(prevData.attended) || 0;
-      const total = (Number(prevData.total) || 0) + 1;
-      return {
-        ...prev,
-        [courseCode]: { attended, total },
-      };
-    });
+  setTimeout(() => {
+    setAnimatingCard(null);
+    setActionType(null);
+  }, 400);
+};
 
-    setTimeout(() => {
-      setAnimatingCard(null);
-      setActionType(null);
-    }, 400);
-  };
+// Mark missed
+const handleMissed = (courseCode) => {
+  // Ask how many sessions
+  const countStr = window.prompt('How many sessions missed? (1 / 2 / 4)', '1');
+  if (!countStr) return;
+
+  const count = Number(countStr);
+  if (![1, 2, 4].includes(count)) {
+    alert('Please enter 1, 2, or 4');
+    return;
+  }
+
+  setAnimatingCard(courseCode);
+  setActionType('missed');
+
+  setAttendance(prev => {
+    const prevData = prev[courseCode] || { attended: 0, total: 0 };
+    const attended = Number(prevData.attended) || 0; // not incremented
+    const total = (Number(prevData.total) || 0) + count;
+    return {
+      ...prev,
+      [courseCode]: { attended, total },
+    };
+  });
+
+  setTimeout(() => {
+    setAnimatingCard(null);
+    setActionType(null);
+  }, 400);
+};
 
   // Percentage for a course (0–100 safe)
   const getPercentage = (courseCode) => {
