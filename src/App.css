@@ -1002,6 +1002,38 @@ body {
   }
 }
 
+/* Reset confirmation uses same glassmorphism base as session-modal */
+.reset-modal {
+  max-width: 380px;
+}
+
+.reset-modal-buttons {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reset-confirm-button {
+  width: 100%;
+  padding: 10px 0;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.reset-confirm-button:active {
+  transform: scale(0.97);
+  box-shadow: 0 5px 15px rgba(239, 68, 68, 0.5);
+  opacity: 0.95;
+}
+
 /* ==================== SVG GRADIENTS ==================== */
 svg defs {
   position: absolute;

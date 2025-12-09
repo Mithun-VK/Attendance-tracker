@@ -41,6 +41,7 @@ const App = () => {
   // animation state
   const [animatingCard, setAnimatingCard] = useState(null);
   const [actionType, setActionType] = useState(null);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
 
   // modal state
   const [sessionModal, setSessionModal] = useState({
@@ -146,15 +147,25 @@ const App = () => {
     }));
   };
 
-  const resetAll = () => {
-    if (!window.confirm('⚠️ This will delete all your attendance data. Are you sure?')) return;
-    const initial = {};
-    courses.forEach(course => {
-      initial[course.code] = { attended: 0, total: 0 };
-    });
-    setAttendance(initial);
-    localStorage.removeItem('attendanceData');
-  };
+// Open reset confirm modal
+const openResetModal = () => {
+  setResetModalOpen(true);
+};
+
+const closeResetModal = () => {
+  setResetModalOpen(false);
+};
+
+// Actually perform reset
+const resetAll = () => {
+  const initial = {};
+  courses.forEach(course => {
+    initial[course.code] = { attended: 0, total: 0 };
+  });
+  setAttendance(initial);
+  localStorage.removeItem('attendanceData');
+  closeResetModal();
+};
 
   return (
     <div className="app-container">
@@ -276,31 +287,60 @@ const App = () => {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="footer-section">
-          <button className="reset-button" onClick={resetAll}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8" />
-              <path d="M21 3v5h-5" />
-              <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16" />
-              <path d="M3 21v-5h5" />
-            </svg>
-            Reset All Data
-          </button>
-          <p className="footer-note">Data is saved automatically in your browser</p>
-        </div>
+{/* Footer */}
+<div className="footer-section">
+  <button className="reset-button" onClick={openResetModal}>
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M3 12a9 9 0 019-9 9.75 9.75 0 016.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 01-9 9 9.75 9.75 0 01-6.74-2.74L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
+    Reset All Data
+  </button>
+  <p className="footer-note">Data is saved automatically in your browser</p>
+</div>
       </div>
+      {/* Glassmorphism reset confirmation modal */}
+    {resetModalOpen && (
+  <div className="session-modal-backdrop" onClick={closeResetModal}>
+    <div
+      className="session-modal reset-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="session-modal-header">
+        <h3>Reset Attendance</h3>
+        <p>This will clear all subjects and cannot be undone.</p>
+      </div>
+
+      <div className="reset-modal-buttons">
+        <button
+          className="reset-confirm-button"
+          onClick={resetAll}
+        >
+          Yes, reset everything
+        </button>
+        <button
+          className="session-cancel-button"
+          onClick={closeResetModal}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Glassmorphism session selector modal */}
       {sessionModal.open && (
-        <div className="session-modal-backdrop" onClick={closeSessionModal}>
+        <div className="reset-button" onClick={openResetModal}>
           <div
             className="session-modal"
             onClick={(e) => e.stopPropagation()}
