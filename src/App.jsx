@@ -12,7 +12,7 @@ const App = () => {
     { code: 'CS23045', name: 'CIP', sessionsPerWeek: 4, color: '#ef4444' },
   ];
 
-  // Initialize attendance state safely from localStorage
+  // attendance state
   const [attendance, setAttendance] = useState(() => {
     const saved = localStorage.getItem('attendanceData');
     if (saved) {
@@ -28,7 +28,7 @@ const App = () => {
         });
         return fixed;
       } catch {
-        // fall through to fresh initialization
+        // fall through
       }
     }
     const initial = {};
@@ -38,79 +38,85 @@ const App = () => {
     return initial;
   });
 
-  // Animation state for per‑card feedback
+  // animation state
   const [animatingCard, setAnimatingCard] = useState(null);
   const [actionType, setActionType] = useState(null);
 
-  // Persist attendance
+  // modal state
+  const [sessionModal, setSessionModal] = useState({
+    open: false,
+    courseCode: null,
+    mode: null, // 'attended' or 'missed'
+  });
+
   useEffect(() => {
     localStorage.setItem('attendanceData', JSON.stringify(attendance));
   }, [attendance]);
 
-  // Mark attended
-// Mark attended
-const handleAttended = (courseCode) => {
-  // Ask how many sessions
-  const countStr = window.prompt('How many sessions attended? (1 / 2 / 4)', '1');
-  if (!countStr) return;
+  // open modal instead of prompt
+  const openSessionModal = (courseCode, mode) => {
+    setSessionModal({
+      open: true,
+      courseCode,
+      mode,
+    });
+  };
 
-  const count = Number(countStr);
-  if (![1, 2, 4].includes(count)) {
-    alert('Please enter 1, 2, or 4');
-    return;
-  }
+  const closeSessionModal = () => {
+    setSessionModal({
+      open: false,
+      courseCode: null,
+      mode: null,
+    });
+  };
 
-  setAnimatingCard(courseCode);
-  setActionType('attended');
+  // when user selects 1 / 2 / 4 in modal
+  const applySessionChange = (count) => {
+    const { courseCode, mode } = sessionModal;
+    if (!courseCode || !mode) return;
 
-  setAttendance(prev => {
-    const prevData = prev[courseCode] || { attended: 0, total: 0 };
-    const attended = (Number(prevData.attended) || 0) + count;
-    const total = (Number(prevData.total) || 0) + count;
-    return {
-      ...prev,
-      [courseCode]: { attended, total },
-    };
-  });
+    setAnimatingCard(courseCode);
+    setActionType(mode);
 
-  setTimeout(() => {
-    setAnimatingCard(null);
-    setActionType(null);
-  }, 400);
-};
+    if (mode === 'attended') {
+      setAttendance(prev => {
+        const prevData = prev[courseCode] || { attended: 0, total: 0 };
+        const attended = (Number(prevData.attended) || 0) + count;
+        const total = (Number(prevData.total) || 0) + count;
+        return {
+          ...prev,
+          [courseCode]: { attended, total },
+        };
+      });
+    } else if (mode === 'missed') {
+      setAttendance(prev => {
+        const prevData = prev[courseCode] || { attended: 0, total: 0 };
+        const attended = Number(prevData.attended) || 0;
+        const total = (Number(prevData.total) || 0) + count;
+        return {
+          ...prev,
+          [courseCode]: { attended, total },
+        };
+      });
+    }
 
-// Mark missed
-const handleMissed = (courseCode) => {
-  // Ask how many sessions
-  const countStr = window.prompt('How many sessions missed? (1 / 2 / 4)', '1');
-  if (!countStr) return;
+    setTimeout(() => {
+      setAnimatingCard(null);
+      setActionType(null);
+    }, 400);
 
-  const count = Number(countStr);
-  if (![1, 2, 4].includes(count)) {
-    alert('Please enter 1, 2, or 4');
-    return;
-  }
+    closeSessionModal();
+  };
 
-  setAnimatingCard(courseCode);
-  setActionType('missed');
+  // handlers used by buttons
+  const handleAttended = (courseCode) => {
+    openSessionModal(courseCode, 'attended');
+  };
 
-  setAttendance(prev => {
-    const prevData = prev[courseCode] || { attended: 0, total: 0 };
-    const attended = Number(prevData.attended) || 0; // not incremented
-    const total = (Number(prevData.total) || 0) + count;
-    return {
-      ...prev,
-      [courseCode]: { attended, total },
-    };
-  });
+  const handleMissed = (courseCode) => {
+    openSessionModal(courseCode, 'missed');
+  };
 
-  setTimeout(() => {
-    setAnimatingCard(null);
-    setActionType(null);
-  }, 400);
-};
-
-  // Percentage for a course (0–100 safe)
   const getPercentage = (courseCode) => {
     const data = attendance[courseCode] || { attended: 0, total: 0 };
     if (!data.total) return 0;
@@ -119,7 +125,6 @@ const handleMissed = (courseCode) => {
     return Number(pct.toFixed(1));
   };
 
-  // Status label + CSS class
   const getStatus = (percentage) => {
     if (percentage >= 85) return { label: 'Excellent', class: 'excellent' };
     if (percentage >= 75) return { label: 'Good', class: 'good' };
@@ -128,7 +133,6 @@ const handleMissed = (courseCode) => {
     return { label: 'Critical', class: 'critical' };
   };
 
-  // Undo last action for a course
   const handleUndo = (courseCode) => {
     const data = attendance[courseCode] || { attended: 0, total: 0 };
     if (!data.total) return;
@@ -142,10 +146,8 @@ const handleMissed = (courseCode) => {
     }));
   };
 
-  // Reset all data
   const resetAll = () => {
     if (!window.confirm('⚠️ This will delete all your attendance data. Are you sure?')) return;
-
     const initial = {};
     courses.forEach(course => {
       initial[course.code] = { attended: 0, total: 0 };
@@ -192,7 +194,6 @@ const handleMissed = (courseCode) => {
                   className={`course-card ${isAnimating ? `animating-${actionType}` : ''}`}
                   style={{ animationDelay: `${index * 40}ms` }}
                 >
-                  {/* Top row: title + undo */}
                   <div className="course-header">
                     <div className="course-title-section">
                       <div
@@ -224,14 +225,12 @@ const handleMissed = (courseCode) => {
                     </button>
                   </div>
 
-                  {/* Stats row + bar */}
                   <div className="course-stats">
                     <div className="stats-row">
                       <span className="stat-text">
                         <strong>{data.attended}</strong> / {data.total} classes
                       </span>
 
-                      {/* NEW: status label + percentage badge */}
                       <div className="status-right">
                         <span className={`status-label ${status.class}`}>
                           {status.label}
@@ -253,7 +252,6 @@ const handleMissed = (courseCode) => {
                     </div>
                   </div>
 
-                  {/* Action buttons */}
                   <div className="action-buttons">
                     <button
                       className="action-btn attended-btn"
@@ -271,10 +269,7 @@ const handleMissed = (courseCode) => {
                     </button>
                   </div>
 
-                  {/* Ripple effect */}
-                  {isAnimating && (
-                    <div className={`ripple-effect ${actionType}`} />
-                  )}
+                  {isAnimating && <div className={`ripple-effect ${actionType}`} />}
                 </div>
               );
             })}
@@ -302,6 +297,37 @@ const handleMissed = (courseCode) => {
           <p className="footer-note">Data is saved automatically in your browser</p>
         </div>
       </div>
+
+      {/* Glassmorphism session selector modal */}
+      {sessionModal.open && (
+        <div className="session-modal-backdrop" onClick={closeSessionModal}>
+          <div
+            className="session-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="session-modal-header">
+              <h3>
+                {sessionModal.mode === 'attended' ? 'Mark Attended' : 'Mark Missed'}
+              </h3>
+              <p>Select how many sessions to apply</p>
+            </div>
+            <div className="session-modal-buttons">
+              {[1, 2, 4].map((count) => (
+                <button
+                  key={count}
+                  className="session-count-button"
+                  onClick={() => applySessionChange(count)}
+                >
+                  {count} session{count > 1 ? 's' : ''}
+                </button>
+              ))}
+            </div>
+            <button className="session-cancel-button" onClick={closeSessionModal}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
